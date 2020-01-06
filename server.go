@@ -33,10 +33,10 @@ func NewServer() *Server {
 	s := &Server{}
 
 	// Allocate Modbus memory maps.
-	s.DiscreteInputs = make([]byte, 65536)
-	s.Coils = make([]byte, 65536)
-	s.HoldingRegisters = make([]uint16, 65536)
-	s.InputRegisters = make([]uint16, 65536)
+	s.DiscreteInputs = make([]byte, 256)
+	s.Coils = make([]byte, 256)
+	s.HoldingRegisters = make([]uint16, 4096)
+	s.InputRegisters = make([]uint16, 4096)
 
 	// Add default functions.
 	s.function[1] = ReadCoils
