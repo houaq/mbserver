@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/goburrow/modbus"
-	"github.com/goburrow/serial"
+	"github.com/tarm/serial"
 )
 
 // The serial read and close has a known race condition.
@@ -32,12 +32,10 @@ func TestModbusRTU(t *testing.T) {
 	// Server
 	s := NewServer()
 	err = s.ListenRTU(&serial.Config{
-		Address:  "ttyFOO",
-		BaudRate: 115200,
-		DataBits: 8,
-		StopBits: 1,
-		Parity:   "N",
-		Timeout:  10 * time.Second})
+		Name:        "ttyFOO",
+		Baud:        115200,
+		ReadTimeout: 10 * time.Second,
+	})
 	if err != nil {
 		t.Fatalf("failed to listen, got %v\n", err)
 	}

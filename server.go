@@ -5,7 +5,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/goburrow/serial"
+	"github.com/tarm/serial"
 )
 
 // Server is a Modbus slave with allocated memory for discrete inputs, coils, etc.
@@ -13,9 +13,9 @@ type Server struct {
 	// Debug enables more verbose messaging.
 	Debug            bool
 	listeners        []net.Listener
-	ports            []serial.Port
+	ports            []*serial.Port
 	requestChan      chan *Request
-	function         [256](func(*Server, Framer) ([]byte, *Exception))
+	function         [17](func(*Server, Framer) ([]byte, *Exception))
 	DiscreteInputs   []byte
 	Coils            []byte
 	HoldingRegisters []uint16
