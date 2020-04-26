@@ -1,7 +1,7 @@
 package mbserver
 
 import (
-	"io"
+	"bytes"
 	"log"
 
 	"github.com/tarm/serial"
@@ -20,31 +20,31 @@ func (s *Server) ListenRTU(serialConfig *serial.Config) (err error) {
 }
 
 func (s *Server) acceptSerialRequests(port *serial.Port) {
+	var bb bytes.Buffer
+	buffer := make([]byte, 8)
 	for {
-		buffer := make([]byte, 512)
-
-		bytesRead, err := port.Read(buffer)
-		if err != nil {
-			if err != io.EOF {
-				log.Printf("serial read error %v\n", err)
-			}
-			return
-		}
-
-		if bytesRead != 0 {
-
-			// Set the length of the packet to the number of read bytes.
-			packet := buffer[:bytesRead]
-
-			frame, err := NewRTUFrame(packet)
+		bb.Reset()
+		for {
+			bytesRead, err := port.Read(buffer)
 			if err != nil {
-				log.Printf("bad serial frame error %v\n", err)
+				log.Printf("serial read error %s\n", err)
 				return
 			}
-
-			request := &Request{port, frame}
-
-			s.requestChan <- request
+			if bytesRead > 0 {
+				bb.Write(buffer)
+				if bb.Len() >= 8 {
+					break
+				}
+			}
 		}
+
+		frame, err := NewRTUFrame(bb.Bytes())
+		if err != nil {
+			log.Printf("bad serial frame error %v\n", err)
+			continue
+		}
+
+		request := &Request{port, frame}
+		s.requestChan <- request
 	}
 }
