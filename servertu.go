@@ -1,7 +1,6 @@
 package mbserver
 
 import (
-	"bytes"
 	"log"
 
 	"github.com/tarm/serial"
@@ -14,33 +13,40 @@ func (s *Server) ListenRTU(serialConfig *serial.Config) (err error) {
 	if err != nil {
 		log.Fatalf("failed to open %s: %v\n", serialConfig.Name, err)
 	}
+	port.Flush()
 	s.ports = append(s.ports, port)
 	go s.acceptSerialRequests(port)
 	return err
 }
 
-func (s *Server) acceptSerialRequests(port *serial.Port) {
-	var bb bytes.Buffer
-	buffer := make([]byte, 8)
-	for {
-		bb.Reset()
-		for {
-			bytesRead, err := port.Read(buffer)
-			if err != nil {
-				log.Printf("serial read error %s\n", err)
-				return
-			}
-			if bytesRead > 0 {
-				bb.Write(buffer)
-				if bb.Len() >= 8 {
-					break
-				}
-			}
+func readFullFrame(port *serial.Port, expectLen int) ([]byte, error) {
+	buffer := make([]byte, 32)
+	frame := make([]byte, 0)
+	for len(frame) < expectLen {
+		n, err := port.Read(buffer)
+		if err != nil {
+			return nil, err
 		}
 
-		frame, err := NewRTUFrame(bb.Bytes())
+		chunk := buffer[:n]
+		log.Printf("serial read: [% 0x]\n", chunk)
+		frame = append(frame, chunk...)
+	}
+	return frame, nil
+}
+
+func (s *Server) acceptSerialRequests(port *serial.Port) {
+	for {
+		packet, err := readFullFrame(port, 8)
+		if err != nil {
+			log.Printf("serial read error %s\n", err)
+			continue
+		}
+
+		frame, err := NewRTUFrame(packet)
 		if err != nil {
 			log.Printf("bad serial frame error %v\n", err)
+			port.Flush()
 			continue
 		}
 
