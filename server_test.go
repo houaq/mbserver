@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goburrow/modbus"
+	"github.com/houaq/modbus"
 )
 
 func TestAduRegisterAndNumber(t *testing.T) {

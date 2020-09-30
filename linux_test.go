@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goburrow/modbus"
+	"github.com/houaq/modbus"
 	"github.com/tarm/serial"
 )
 
@@ -46,12 +46,12 @@ func TestModbusRTU(t *testing.T) {
 
 	// Client
 	handler := modbus.NewRTUClientHandler("ttyBAR")
-	handler.BaudRate = 115200
-	handler.DataBits = 8
-	handler.Parity = "N"
+	handler.Baud = 115200
+	handler.Size = 8
+	handler.Parity = serial.ParityNone
 	handler.StopBits = 1
-	handler.SlaveId = 1
-	handler.Timeout = 5 * time.Second
+	handler.SlaveID = 1
+	handler.ReadTimeout = 5 * time.Second
 	// Connect manually so that multiple requests are handled in one connection session
 	err = handler.Connect()
 	if err != nil {
