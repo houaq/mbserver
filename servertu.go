@@ -29,7 +29,6 @@ func readFullFrame(port *serial.Port, expectLen int) ([]byte, error) {
 		}
 
 		chunk := buffer[:n]
-		log.Printf("serial read: [% 0x]\n", chunk)
 		frame = append(frame, chunk...)
 	}
 	return frame, nil
@@ -39,13 +38,26 @@ func (s *Server) acceptSerialRequests(port *serial.Port) {
 	for {
 		packet, err := readFullFrame(port, 8)
 		if err != nil {
-			log.Printf("serial read error %s\n", err)
+			log.Printf("readFullFrame %s\n", err)
 			continue
+		}
+
+		var extra []byte
+		if packet[1] == 0x0f || packet[1] == 0x10 {
+			remain := int(9+packet[6]) - len(packet)
+			if remain > 0 {
+				extra, err = readFullFrame(port, remain)
+				if err != nil {
+					log.Printf("extra readFullFrame %s\n", err)
+					continue
+				}
+				packet = append(packet, extra...)
+			}
 		}
 
 		frame, err := NewRTUFrame(packet)
 		if err != nil {
-			log.Printf("bad serial frame error %v\n", err)
+			log.Printf("NewRTUFrame %v\n", err)
 			port.Flush()
 			continue
 		}
